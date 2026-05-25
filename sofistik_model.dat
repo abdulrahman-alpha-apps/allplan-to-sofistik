@@ -1,65 +1,110 @@
-$ ========================================================
-$ SOFiSTiK CADINP — Allplan IFC → SOFiSTiK (fixed)
-$ Source: IFC-2x3.ifc   |   Date: 2026-05-25
-$ ========================================================
+$ ============================================================
+$ SOFiSTiK CADINP — Allplan IFC to SOFiSTiK (fully corrected)
+$ Source : IFC-2x3.ifc
+$ Date   : 2026-05-25
+$
+$ STRUCTURE: Simple 2D portal frame
+$   - 2 concrete columns  (H=2.0m, 300x300mm, C30)
+$   - 1 steel beam        (L=4.0m, 500x300mm, S355)
+$   - Fixed base supports at both column feet
+$
+$ FIXES APPLIED:
+$   1. FIX syntax        : FIX FFFXXX  →  FIX F
+$   2. SYST cleaned      : removed invalid GDIV param
+$   3. SELF syntax       : SELF FACT   →  SELF
+$   4. Beam geometry     : reconnected beam to column tops
+$   5. Added live + wind load cases
+$ ============================================================
+
+
+$ ============================================================
+$ [1] AQUA — Materials and Cross-Sections
+$ ============================================================
 
 +PROG AQUA urs:1
 HEAD Materials and Cross-Sections
 
+NORM EN
+
 $ --- Materials ---
-CONC 1  TYPE C30  TITL 'Stahlbeton C30/37'
+CONC 1  TYPE C30   TITL 'Stahlbeton C30/37'
 STEE 2  TYPE S355  TITL 'Stahl S355'
 
 $ --- Cross-Sections ---
-SREC 1  H 0.30  B 0.30  MNO 1  $ Column 300x300 — Stahlbeton C30
-SREC 2  H 0.50  B 0.30  MNO 2  $ Beam   500x300 — Stahl S355
+SREC 1  H 0.30  B 0.30  MNO 1  $ Column 300x300 — concrete
+SREC 2  H 0.50  B 0.30  MNO 2  $ Beam   500x300 — steel
 
 END
+
+
+$ ============================================================
+$ [2] SOFIMSHA — Structural System
+$
+$  NODE layout (metres):
+$
+$   N3 ————————BEAM 3————————— N4
+$   |                           |
+$  BEAM1(col)              BEAM2(col)
+$   |                           |
+$   N1[FIXED]              N2[FIXED]
+$
+$  N1: (-4.0, 0, 0.0)   column 2 base
+$  N2: ( 0.0, 0, 0.0)   column 1 base
+$  N3: (-4.0, 0, 2.0)   column 2 top / beam left end
+$  N4: ( 0.0, 0, 2.0)   column 1 top / beam right end
+$ ============================================================
 
 +PROG SOFIMSHA urs:2
-HEAD Structural Model
+HEAD Structural System
 
-SYST 3D GIRD GDIV 1000
+SYST 3D GIRD
 
 $ --- Nodes ---
-NODE    1  X   0.1355  Y  -1.0599  Z   0.0000
-NODE    2  X   0.1355  Y  -1.0599  Z   2.0000
-NODE    3  X  -3.8645  Y  -1.0599  Z   0.0000
-NODE    4  X  -3.8645  Y  -1.0599  Z   2.0000
-NODE    5  X  -3.6645  Y  -0.8599  Z   2.1500
-NODE    6  X  -3.6645  Y  -0.8599  Z   6.1500
-
-$ --- Support conditions (fixed at base) ---
-NODE    1  FIX FFFXXX   $ Fixed base support
-NODE    3  FIX FFFXXX   $ Fixed base support
+NODE  1  X -4.000  Y 0.000  Z 0.000  FIX F   $ Col2 base FIXED
+NODE  2  X  0.000  Y 0.000  Z 0.000  FIX F   $ Col1 base FIXED
+NODE  3  X -4.000  Y 0.000  Z 2.000          $ Col2 top / Beam left
+NODE  4  X  0.000  Y 0.000  Z 2.000          $ Col1 top / Beam right
 
 $ --- Elements ---
-$ COLUMN:    |  mat: Stahlbeton
-BEAM    1  NA 1  NE 2  NCS 1
-$ COLUMN: Column  |  mat: Stahlbeton
-BEAM    2  NA 3  NE 4  NCS 1
-$ BEAM: Beam  |  mat: Stahl
-BEAM    3  NA 5  NE 6  NCS 2
+BEAM  1  NA 1  NE 3  NCS 1   $ Column left  (concrete C30)
+BEAM  2  NA 2  NE 4  NCS 1   $ Column right (concrete C30)
+BEAM  3  NA 3  NE 4  NCS 2   $ Beam         (steel S355)
 
 END
+
+
+$ ============================================================
+$ [3] SOFILOAD — Load Cases
+$ ============================================================
 
 +PROG SOFILOAD urs:3
 HEAD Load Cases
 
-LC 1  TYPE G  TITL 'Eigengewicht (Self Weight)'
-  SELF FACT -1.0   $ Self weight — gravity in -Z direction
+$ LC1: Self weight
+LC 1  TYPE G  TITL 'Eigengewicht'
+  SELF
 
-LC 2  TYPE Q  TITL 'Nutzlast (Live Load)'
-$ Add live loads here, e.g.:
-$ BEAM GRP 0  POUT -5.0  $ 5 kN/m distributed on beams
+$ LC2: Live load on beam (5 kN/m downward)
+LC 2  TYPE Q  TITL 'Nutzlast'
+  BEAM 3  POUT -5.0
+
+$ LC3: Horizontal wind (2 kN/m on columns)
+LC 3  TYPE W  TITL 'Windlast'
+  BEAM 1  PY 2.0
+  BEAM 2  PY 2.0
 
 END
+
+
+$ ============================================================
+$ [4] ASE — Linear Static Analysis
+$ ============================================================
 
 +PROG ASE urs:4
 HEAD Linear Static Analysis
 
-SYST PROB LINE   $ Linear analysis
+SYST PROB LINE
 
-LC ALL            $ Analyze all defined load cases
+LC ALL
 
 END
