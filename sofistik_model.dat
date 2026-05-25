@@ -1,0 +1,52 @@
+$ ========================================================
+$ SOFiSTiK CADINP — generated from Allplan IFC export
+$ Source: IFC-2x3.ifc
+$ Date  : 2026-05-25
+$ REVIEW all materials, sections and boundary conditions
+$ before running analysis!
+$ ========================================================
+
++PROG AQUA urs:1
+HEAD Materials and Cross-Sections
+
+$ --- Materials ---
+CONC 1  TYPE C30  TITL 'Stahlbeton C30/37'   $ Reinforced Concrete (was: Stahlbeton)
+STEE 2  TYPE S355 TITL 'Stahl S355'          $ Structural Steel    (was: Stahl)
+
+$ --- Cross-Sections ---
+SREC 1  H 0.30  B 0.30  MNO 1  $ Column 300x300 — Stahlbeton C30
+SREC 2  H 0.50  B 0.30  MNO 2  $ Beam   500x300 — Stahl S355
+SVAL 3  H 0.20  MNO 1          $ Slab   200mm   — Stahlbeton C30
+
+END
+
++PROG SOFIMSHA urs:2
+HEAD Structural Model
+
+SYST 3D GIRD
+
+$ ── Columns ──────────────────────────────────────────────
+$ Column 1: _  |  Material: Stahlbeton
+BEAM 1001  NCS 1  $ _
+$ Column 2: Column  |  Material: Stahlbeton
+BEAM 1002  NCS 1  $ Column
+
+$ ── Beams ────────────────────────────────────────────────
+$ Beam 1: Beam  |  Material: Stahl
+BEAM 2001  NCS 2  $ Beam
+
+END
+
++PROG SOFILOAD urs:3
+HEAD Load Cases — define manually
+
+$ ⚠️  Loads are NOT transferred via IFC.
+$ Define your load cases here.
+
+LC 1  TYPE G  TITL 'Self Weight'
+  SELF FACG -1.0   $ Automatic self weight
+
+LC 2  TYPE Q  TITL 'Live Load'
+$ QUAD ... PZZE -5.0   $ Example: 5 kN/m² on slabs
+
+END

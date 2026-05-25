@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Editor
+.vscode/
+.idea/
+
+# Temp
+*.tmp
+*.bak
