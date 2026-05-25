@@ -72,6 +72,9 @@ HEAD PORTAL FRAME — LINEAR STATIC ANALYSIS
 
 SYST PROB LINE
 
-LC ALL
+$ Analyze each load case explicitly — LC ALL not supported
+LC NO 1   $ Eigengewicht
+LC NO 2   $ Nutzlast
+LC NO 3   $ Windlast
 
 END
