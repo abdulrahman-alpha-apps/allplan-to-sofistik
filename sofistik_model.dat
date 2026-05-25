@@ -53,18 +53,17 @@ PROG SOFILOAD
 
 HEAD PORTAL FRAME — LOAD CASES
 
-$ LC 1: Self weight — gravity applied to all elements
-LC 1  TYPE G  TITL 'Eigengewicht (Self Weight)'
-   SELF GRP 0  FACT -1.0
+$ LC 1: Self weight
+LC 1  FACD 1.0  TITL 'Eigengewicht'
+   SELF
 
-$ LC 2: Live load — distributed on beam (element 3) in -Z direction
-LC 2  TYPE Q  TITL 'Nutzlast (Live Load)'
-   BEAM  NO 3  TYPE PZ  P -5.0
+$ LC 2: Live load 5 kN/m on beam
+LC 2  FACD 1.0  TITL 'Nutzlast'
+   BEAM GRP 0  TYPE PZ  P -5.0
 
-$ LC 3: Wind — distributed on columns in +Y direction
-LC 3  TYPE W  TITL 'Windlast (Wind)'
-   BEAM  NO 1  TYPE PY  P 2.0
-   BEAM  NO 2  TYPE PY  P 2.0
+$ LC 3: Wind 2 kN/m on columns
+LC 3  FACD 1.0  TITL 'Windlast'
+   BEAM GRP 0  TYPE PY  P  2.0
 
 END
 
