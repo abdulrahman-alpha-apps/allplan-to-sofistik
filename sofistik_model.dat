@@ -1,107 +1,74 @@
 $ ============================================================
-$ SOFiSTiK CADINP — Allplan IFC to SOFiSTiK (fully corrected)
-$ Source : IFC-2x3.ifc
-$ Date   : 2026-05-25
-$
-$ STRUCTURE: Simple 2D portal frame
-$   - 2 concrete columns  (H=2.0m, 300x300mm, C30)
-$   - 1 steel beam        (L=4.0m, 500x300mm, S355)
-$   - Fixed base supports at both column feet
-$
-$ FIXES APPLIED:
-$   1. FIX syntax        : FIX FFFXXX  →  FIX F
-$   2. SYST cleaned      : removed invalid GDIV param
-$   3. SELF syntax       : SELF FACT   →  SELF
-$   4. Beam geometry     : reconnected beam to column tops
-$   5. Added live + wind load cases
+$ Portal Frame — 2 Concrete Columns + 1 Steel Beam
+$ Source: Allplan IFC-2x3.ifc
 $ ============================================================
 
 
-$ ============================================================
-$ [1] AQUA — Materials and Cross-Sections
-$ ============================================================
+PROG AQUA
 
-+PROG AQUA urs:1
-HEAD Materials and Cross-Sections
+HEAD PORTAL FRAME — MATERIALS AND CROSS-SECTIONS
 
 NORM EN
 
-$ --- Materials ---
-CONC 1  TYPE C30   TITL 'Stahlbeton C30/37'
-STEE 2  TYPE S355  TITL 'Stahl S355'
+CONC  1 C  30                       $ Stahlbeton C30/37
+STEE  2 S  355                      $ Stahl S355
 
-$ --- Cross-Sections ---
-SREC 1  H 0.30  B 0.30  MNO 1  $ Column 300x300 — concrete
-SREC 2  H 0.50  B 0.30  MNO 2  $ Beam   500x300 — steel
+SREC  1  H 0.30  B 0.30  MNO 1     $ Column 300x300mm — concrete
+SREC  2  H 0.50  B 0.30  MNO 2     $ Beam   500x300mm — steel
 
 END
 
 
-$ ============================================================
-$ [2] SOFIMSHA — Structural System
-$
-$  NODE layout (metres):
-$
-$   N3 ————————BEAM 3————————— N4
-$   |                           |
-$  BEAM1(col)              BEAM2(col)
-$   |                           |
-$   N1[FIXED]              N2[FIXED]
-$
-$  N1: (-4.0, 0, 0.0)   column 2 base
-$  N2: ( 0.0, 0, 0.0)   column 1 base
-$  N3: (-4.0, 0, 2.0)   column 2 top / beam left end
-$  N4: ( 0.0, 0, 2.0)   column 1 top / beam right end
-$ ============================================================
+PROG SOFIMSHA
 
-+PROG SOFIMSHA urs:2
-HEAD Structural System
+HEAD PORTAL FRAME — STRUCTURAL SYSTEM
+HEAD 2 FIXED COLUMNS + 1 HORIZONTAL BEAM
+HEAD SPAN 4.0m  HEIGHT 2.0m
+
+$
+$   N3 ————————BEAM 3———————— N4   z=2.0m
+$   |                           |
+$  BEAM 1 (col)          BEAM 2 (col)
+$   |                           |
+$   N1 [FIX F]           N2 [FIX F]    z=0.0m
+$
 
 SYST 3D GIRD
 
 $ --- Nodes ---
-NODE  1  X -4.000  Y 0.000  Z 0.000  FIX F   $ Col2 base FIXED
-NODE  2  X  0.000  Y 0.000  Z 0.000  FIX F   $ Col1 base FIXED
-NODE  3  X -4.000  Y 0.000  Z 2.000          $ Col2 top / Beam left
-NODE  4  X  0.000  Y 0.000  Z 2.000          $ Col1 top / Beam right
+NODE  1  X -4.000  Y 0.000  Z 0.000  FIX F   $ Column 2 base — fixed
+NODE  2  X  0.000  Y 0.000  Z 0.000  FIX F   $ Column 1 base — fixed
+NODE  3  X -4.000  Y 0.000  Z 2.000          $ Column 2 top  / Beam left
+NODE  4  X  0.000  Y 0.000  Z 2.000          $ Column 1 top  / Beam right
 
-$ --- Elements ---
-BEAM  1  NA 1  NE 3  NCS 1   $ Column left  (concrete C30)
-BEAM  2  NA 2  NE 4  NCS 1   $ Column right (concrete C30)
-BEAM  3  NA 3  NE 4  NCS 2   $ Beam         (steel S355)
-
-END
-
-
-$ ============================================================
-$ [3] SOFILOAD — Load Cases
-$ ============================================================
-
-+PROG SOFILOAD urs:3
-HEAD Load Cases
-
-$ LC1: Self weight
-LC 1  TYPE G  TITL 'Eigengewicht'
-  SELF
-
-$ LC2: Live load on beam (5 kN/m downward)
-LC 2  TYPE Q  TITL 'Nutzlast'
-  BEAM 3  POUT -5.0
-
-$ LC3: Horizontal wind (2 kN/m on columns)
-LC 3  TYPE W  TITL 'Windlast'
-  BEAM 1  PY 2.0
-  BEAM 2  PY 2.0
+$ --- Beam Elements ---
+BEAM  1  NA 1  NE 3  NCS 1   $ Column left  — Stahlbeton C30
+BEAM  2  NA 2  NE 4  NCS 1   $ Column right — Stahlbeton C30
+BEAM  3  NA 3  NE 4  NCS 2   $ Beam         — Stahl S355
 
 END
 
 
-$ ============================================================
-$ [4] ASE — Linear Static Analysis
-$ ============================================================
+PROG SOFILOAD
 
-+PROG ASE urs:4
-HEAD Linear Static Analysis
+HEAD PORTAL FRAME — LOAD CASES
+
+LC 1  TYPE G  TITL 'Eigengewicht (Self Weight)'
+   SELF
+
+LC 2  TYPE Q  TITL 'Nutzlast (Live Load)'
+   BEAM  3  POUT -5.0          $ 5 kN/m downward on beam
+
+LC 3  TYPE W  TITL 'Windlast (Wind)'
+   BEAM  1  PY   2.0           $ 2 kN/m horizontal on column 1
+   BEAM  2  PY   2.0           $ 2 kN/m horizontal on column 2
+
+END
+
+
+PROG ASE
+
+HEAD PORTAL FRAME — LINEAR STATIC ANALYSIS
 
 SYST PROB LINE
 
